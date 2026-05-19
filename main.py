@@ -73,22 +73,14 @@ async def on_raw_message_edit(payload):
         if description.startswith("Reward:"):
             await asyncio.sleep(3600)
             await channel.send(f"**<@{user_id}>** You can claim your hourly reward")
-
-@bot.event
-async def on_message(message):
-    if str(message.author.id) != POKEVENTURE_BOT_ID:
-        return
     
-    if not message.embeds:
-        return
-
-    embed = message.embeds[0]
-    description = embed.description or ""
     if "You caught a <:lr:" in description or "✨" in description:
         channel = bot.get_channel(RARESPAWN_CHANNEL_ID)
+        image_data = payload.data["embeds"][0].get("image", {})
+        if image_data.get("height") == 0:
+            return
         if not channel:
             return
-
         rarity_match = re.search(r"<:(n_|u_|r_|sr|ur|lr):", description)
         rarity = rarity_match.group(1) if rarity_match else ""
         rarity_emoji = rarity_dict.get(rarity, "Unknown")
@@ -96,11 +88,12 @@ async def on_message(message):
         pokemon_match = re.search(r">(.*?)\!", description)
         pokemon = pokemon_match.group(1).strip() if pokemon_match else "Pokémon"
 
-        username = embed.author.name if embed.author else "Someone"
+        username = payload.data.get("interaction_metadata", {}).get("user", {}).get("username")
         rare_spawn_embed = nextcord.Embed(title="Pokeventure Rarespawn", color=nextcord.Colour.blue())
         rare_spawn_embed.add_field(name = f"{username} caught a {rarity_emoji} {pokemon}", value="")
-        image_url = embed.image.url
-        rare_spawn_embed.set_image(url=image_url)
+        image_url = image_data.get("url")
+        if image_url:
+            rare_spawn_embed.set_image(url=image_url)
         await channel.send(embed=rare_spawn_embed)
 
 BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
