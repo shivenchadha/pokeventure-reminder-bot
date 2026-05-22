@@ -74,7 +74,9 @@ async def on_raw_message_edit(payload):
             await asyncio.sleep(3600)
             await channel.send(f"**<@{user_id}>** You can claim your hourly reward")
     
-    if "You caught a <:lr:" in description or "✨" in description:
+    if "You caught a" in description:
+        if "<:lr:" not in description and "✨" not in description:
+            return
         channel = bot.get_channel(RARESPAWN_CHANNEL_ID)
         image_data = payload.data["embeds"][0].get("image", {})
         if image_data.get("height") == 0:
