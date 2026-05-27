@@ -90,7 +90,7 @@ async def on_raw_message_edit(payload):
         pokemon_match = re.search(r">(.*?)\!", description)
         pokemon = pokemon_match.group(1).strip() if pokemon_match else "Pokémon"
 
-        username = payload.data.get("interaction_metadata", {}).get("user", {}).get("username")
+        username = nextcord.utils.escape_markdown(payload.data.get("interaction_metadata", {}).get("user", {}).get("username", "Someone"))
         rare_spawn_embed = nextcord.Embed(title="Pokeventure Rarespawn", color=nextcord.Colour.blue())
         rare_spawn_embed.add_field(name = f"{username} caught a {rarity_emoji} {pokemon}", value="")
         image_url = image_data.get("url")
