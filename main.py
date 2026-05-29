@@ -2,6 +2,7 @@ import nextcord
 from nextcord.ext import commands
 import asyncio
 import re
+import os
 
 intents = nextcord.Intents.all()
 intents.message_content = True
@@ -9,7 +10,9 @@ intents.message_content = True
 bot = commands.Bot(intents=intents)
 
 POKEVENTURE_BOT_ID = "1428761819563950271"
-RARESPAWN_CHANNEL_ID = 948098661794062366  # Enter your channel ID here
+RARESPAWN_CHANNEL_ID = 948098661794062366  # Enter your rare spawn channel ID here
+ANNOUNCEMENTS_CHANNEL_ID = 872641775032991794  # Enter your raid announcements channel ID here
+RAID_ANNOUNCEMENT_ROLE_ID = 876637017633587251  # Enter your raid announcements role ID here
 
 #Replace the values with your own bot emojis, or just put text if you dont want emojis
 rarity_dict = {
@@ -20,6 +23,16 @@ rarity_dict = {
     "ur": "<:ur:1505074999386701856>",
     "lr": "<:lr:1448981944800116812>"
 }
+
+#Put the raid bosses you want to be notified about in this file
+raid_bosses_file_path = "raid_bosses.txt"
+if os.path.exists(raid_bosses_file_path):
+    with open(raid_bosses_file_path, "r", encoding="utf-8") as f:
+        raid_bosses = set(line.strip() for line in f if line.strip())
+        print(f"Loaded {len(raid_bosses)} raid bosses from file.")
+else:
+    raid_bosses = set()
+    print("Raid bosses file not found. No raid boss notifications will be sent.")
 
 @bot.event
 async def on_ready():
@@ -97,6 +110,20 @@ async def on_raw_message_edit(payload):
         if image_url:
             rare_spawn_embed.set_image(url=image_url)
         await channel.send(embed=rare_spawn_embed)
+
+@bot.event
+async def on_message(message):
+    if message.channel.id != ANNOUNCEMENTS_CHANNEL_ID:
+        return
+
+    if message.embeds and message.embeds[0].title and "Raid announcement" in message.embeds[0].title:
+        description = message.embeds[0].description
+        
+        match = re.search(r"Will you defeat \*\*(.*?)\*\*", description)
+        if match:
+            raid_boss = match.group(1).replace("?", "")
+            if raid_boss in raid_bosses:
+                await message.channel.send(f"**<@&{RAID_ANNOUNCEMENT_ROLE_ID}>** A **{raid_boss}** raid is coming!")
 
 BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 bot.run(BOT_TOKEN)
